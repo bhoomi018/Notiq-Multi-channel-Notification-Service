@@ -3,8 +3,8 @@ import { getStats } from "../services/analytics.service";
 
 const router = Router();
 
-router.get("/", async (_, res) => {
-  const stats = await getStats();
+router.get("/channels", async (_, res) => {
+  const stats = await getChannelStats();
   res.json(stats);
 });
 
