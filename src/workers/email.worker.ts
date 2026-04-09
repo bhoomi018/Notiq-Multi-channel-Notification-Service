@@ -1,11 +1,11 @@
-import { notificationQueue } from "../services/queue.service";
-import { transporter } from "../config/mailer";
-import { updateStatus } from "../models/notification.model";
+import { getPreferences } from "../models/user.model";
+import { logChannel, updateStatus } from "../models/notification.model";
 
 notificationQueue.process(async (job) => {
-  const { notificationId, message, channels } = job.data;
+  const { notificationId, userId, message, channels } = job.data;
 
-  if (!channels.includes("email")) return;
+  const prefs = await getPreferences(userId);
+  if (!prefs?.email_enabled) return;
 
   try {
     await transporter.sendMail({
@@ -15,9 +15,10 @@ notificationQueue.process(async (job) => {
       text: message,
     });
 
+    await logChannel(notificationId, "email", "delivered");
     await updateStatus(notificationId, "delivered");
   } catch (err) {
-    await updateStatus(notificationId, "failed");
+    await logChannel(notificationId, "email", "failed");
     throw err;
   }
 });
