@@ -1,8 +1,10 @@
 import { pool } from "../config/db";
 
-export const getStats = async () => {
-  const result = await pool.query(
-    "SELECT status, COUNT(*) FROM notifications GROUP BY status"
-  );
-  return result.rows;
+export const getChannelStats = async () => {
+  const res = await pool.query(`
+    SELECT channel, status, COUNT(*) 
+    FROM notification_logs 
+    GROUP BY channel, status
+  `);
+  return res.rows;
 };
