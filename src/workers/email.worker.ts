@@ -1,8 +1,9 @@
 import { notificationQueue } from "../services/queue.service";
 import { transporter } from "../config/mailer";
+import { updateStatus } from "../models/notification.model";
 
 notificationQueue.process(async (job) => {
-  const { message, channels } = job.data;
+  const { notificationId, message, channels } = job.data;
 
   if (!channels.includes("email")) return;
 
@@ -13,8 +14,10 @@ notificationQueue.process(async (job) => {
       subject: "Notification",
       text: message,
     });
+
+    await updateStatus(notificationId, "delivered");
   } catch (err) {
-    console.error("Email failed:", err);
+    await updateStatus(notificationId, "failed");
     throw err;
   }
 });
