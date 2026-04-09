@@ -1,25 +1,25 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
 import { notificationQueue } from "../services/queue.service";
+import { processNotification } from "../services/delivery.service";
 
 const router = Router();
 
-router.post("/", async (req: Request, res: Response) => {
+router.post("/", async (req, res) => {
   try {
     const { userId, message, channels } = req.body;
 
-    if (!userId || !message || !channels) {
-      return res.status(400).json({ error: "Invalid payload" });
-    }
+    const notification = await processNotification({ userId, message });
 
-    await notificationQueue.add(
-      { userId, message, channels },
-      { attempts: 3, backoff: 5000 }
-    );
+    await notificationQueue.add({
+      notificationId: notification.id,
+      userId,
+      message,
+      channels,
+    });
 
-    return res.json({ success: true });
-  } catch (error) {
-    console.error("Notify error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed" });
   }
 });
 
